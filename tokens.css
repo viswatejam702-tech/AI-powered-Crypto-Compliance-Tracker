@@ -1,0 +1,51 @@
+"use client";
+
+import { ONBOARDING_STEPS } from "@/lib/onboarding-types";
+
+interface OnboardingProgressProps {
+  currentIndex: number;
+}
+
+export function OnboardingProgress({ currentIndex }: OnboardingProgressProps) {
+  const total = ONBOARDING_STEPS.length;
+  const percent = Math.round(((currentIndex + 1) / total) * 100);
+
+  return (
+    <nav aria-label="Onboarding progress" className="w-full">
+      <ol className="flex gap-1" role="list">
+        {ONBOARDING_STEPS.map((step, index) => {
+          const status =
+            index < currentIndex
+              ? "complete"
+              : index === currentIndex
+                ? "current"
+                : "upcoming";
+          return (
+            <li key={step.id} className="flex-1" aria-current={status === "current" ? "step" : undefined}>
+              <span className="sr-only">
+                Step {index + 1} of {total}: {step.title} — {status}
+              </span>
+              <div
+                aria-hidden="true"
+                className={[
+                  "h-1 rounded-full motion-safe-transition",
+                  status === "complete" || status === "current"
+                    ? "bg-brand"
+                    : "bg-border",
+                  status === "current" ? "opacity-100" : status === "complete" ? "opacity-70" : "opacity-40",
+                ].join(" ")}
+              />
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-caption text-ink-subtle" aria-live="polite">
+        Step {currentIndex + 1} of {total}
+        <span className="mx-2 text-border-strong" aria-hidden="true">
+          ·
+        </span>
+        <span className="font-medium text-ink-muted">{percent}%</span>
+      </p>
+    </nav>
+  );
+}

@@ -1,167 +1,44 @@
-# 🚀 Crypto Compliance Tracker
+# Crypto Compliance Tracker
 
-AI-powered Crypto Compliance Tracker built using Flask, Machine Learning, HTML, and CSS.  
-This platform helps analyze crypto-related compliance data using regression and classification models with interactive analytics and prediction capabilities.
+SaaS onboarding flow built with **design-mastery**: one component (`OnboardingFlow`), three disciplines (designer, a11y, frontend) on shared tokens.
 
----
-
-# ✨ Features
-
-- 📊 Machine Learning Predictions
-- 📈 Linear Regression Analytics
-- 🤖 Logistic Regression Classification
-- 🌐 Flask Web Application
-- 🎨 Responsive UI with HTML & CSS
-- 📉 Data Visualization & Graphs
-- ⚡ Real-Time Prediction Interface
-- 🔐 Clean Project Structure
-- 📱 Mobile-Friendly Design
-
----
-
-# 🛠️ Tech Stack
-
-## Frontend
-- HTML5
-- CSS3
-
-## Backend
-- Flask
-- Python
-
-## Machine Learning
-- Scikit-learn
-- Pandas
-- NumPy
-- Matplotlib
-
----
-
-# 📂 Project Structure
+## Quick start
 
 ```bash
-project/
-│
-├── app.py
-├── model.pkl
-├── requirements.txt
-│
-├── templates/
-│   └── index.html
-│
-├── static/
-│   └── style.css
-│
-└── dataset/
+npm install
+npm run dev
 ```
 
----
+- Home (landing): http://localhost:3000
+- Onboarding: http://localhost:3000/onboarding
+- Mobile (fintech dark): http://localhost:3000/mobile
+- Dashboard: http://localhost:3000/dashboard
 
-# ⚙️ Installation
+## Docs
 
-## Clone Repository
+- UX audit (top 5 issues): `docs/ux-audit.md`
+- Landing headlines: `docs/landing-headlines.md`
 
-```bash
-git clone <your-repository-url>
-```
+## Design system
 
-## Navigate to Project
+Tokens: `src/styles/tokens.css`  
+Cross-discipline spec: `design-mastery/onboarding-flow.md`
 
-```bash
-cd project-name
-```
+## Component architecture (React + Tailwind)
 
-## Create Virtual Environment
+| Layer | Path |
+|-------|------|
+| Content | `src/lib/landing-content.ts` |
+| Primitives | `src/components/ui/` (`Button`, `LinkButton`, `Container`, `Section`) |
+| Layout | `src/components/layout/` |
+| Landing | `src/components/landing/` (Server Components) |
 
-```bash
-python -m venv .venv
-```
+### Mobile fintech dark theme
 
-## Activate Environment
+Spec: `mobile-app-ui-design/fintech-dark-theme.md`  
+Tokens: `src/styles/mobile-tokens.css` (scoped `data-theme="mobile-fintech-dark"`)  
+Components: `src/components/mobile/`
 
-### Windows
+## Stack
 
-```bash
-.\.venv\Scripts\activate
-```
-
-### Linux / Mac
-
-```bash
-source .venv/bin/activate
-```
-
-## Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-# ▶️ Run Application
-
-```bash
-python app.py
-```
-
-Open browser:
-
-```bash
-http://127.0.0.1:5000
-```
-
----
-
-# 📊 Machine Learning Models
-
-## Regression
-- Linear Regression
-- Ridge Regression (L2)
-- Lasso Regression (L1)
-
-## Classification
-- Logistic Regression
-
----
-
-# 📈 Visualizations
-
-- Scatter Plots
-- Regression Lines
-- Residual Plots
-- Error Distribution
-- ROC Curve
-- Confusion Matrix
-- Prediction Comparison Graphs
-
----
-
-# 🔥 Future Improvements
-
-- Authentication System
-- Cloud Deployment
-- Real-Time Crypto APIs
-- Dashboard Analytics
-- Database Integration
-- Advanced AI Models
-- User Management
-
----
-
-# 🤝 Contributing
-
-Contributions are welcome.  
-Fork the repository and submit a pull request.
-
----
-
-# 📜 License
-
-This project is licensed under the MIT License.
-
----
-
-# 👨‍💻 Developer
-
-Built with Flask, Machine Learning, and modern web technologies for AI-powered compliance analytics.
+Next.js 15 · React 19 · Tailwind 3 · TypeScript

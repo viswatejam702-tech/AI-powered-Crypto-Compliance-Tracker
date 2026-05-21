@@ -1,0 +1,382 @@
+"use client";
+
+import { useCallback, useId, useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { CheckboxChip, Field, SelectableCard } from "@/components/ui/Field";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
+import { useFocusOnStepChange } from "@/hooks/useFocusOnStepChange";
+import {
+  INITIAL_ONBOARDING,
+  ONBOARDING_STEPS,
+  type AlertChannel,
+  type EntityType,
+  type JurisdictionId,
+  type OnboardingState,
+} from "@/lib/onboarding-types";
+
+const ENTITY_OPTIONS: { value: EntityType; title: string; description: string }[] = [
+  { value: "exchange", title: "Exchange / trading platform", description: "Spot, derivatives, or hybrid venues" },
+  { value: "custodian", title: "Custodian", description: "Qualified custodians and wallet providers" },
+  { value: "issuer", title: "Token issuer", description: "Stablecoins, securities tokens, NFT platforms" },
+  { value: "defi", title: "DeFi protocol", description: "DEXs, lending, staking protocols" },
+  { value: "fintech", title: "Fintech with crypto", description: "Payments, neobanks, embedded crypto" },
+  { value: "fund", title: "Fund / asset manager", description: "VC, hedge, RIA with digital asset exposure" },
+];
+
+const JURISDICTION_OPTIONS: { value: JurisdictionId; label: string }[] = [
+  { value: "us", label: "United States" },
+  { value: "eu", label: "European Union (MiCA)" },
+  { value: "uk", label: "United Kingdom" },
+  { value: "sg", label: "Singapore" },
+  { value: "uae", label: "UAE" },
+];
+
+function validateStep(stepIndex: number, state: OnboardingState): string | null {
+  switch (stepIndex) {
+    case 0:
+      return state.organizationName.trim().length < 2
+        ? "Enter your organization name (at least 2 characters)."
+        : null;
+    case 1:
+      return state.entityType ? null : "Select your business type to continue.";
+    case 2:
+      return state.jurisdictions.length === 0
+        ? "Select at least one jurisdiction to monitor."
+        : null;
+    default:
+      return null;
+  }
+}
+
+export function OnboardingFlow() {
+  const formId = useId();
+  const [stepIndex, setStepIndex] = useState(0);
+  const [state, setState] = useState<OnboardingState>(INITIAL_ONBOARDING);
+  const [error, setError] = useState<string | null>(null);
+  const [teamInput, setTeamInput] = useState("");
+  const [teamError, setTeamError] = useState<string | null>(null);
+
+  const headingRef = useFocusOnStepChange(stepIndex);
+  const step = ONBOARDING_STEPS[stepIndex];
+  const isLastStep = stepIndex === ONBOARDING_STEPS.length - 1;
+
+  const goNext = useCallback(() => {
+    const validationError = validateStep(stepIndex, state);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError(null);
+    setStepIndex((i) => Math.min(i + 1, ONBOARDING_STEPS.length - 1));
+  }, [stepIndex, state]);
+
+  const goBack = useCallback(() => {
+    setError(null);
+    setStepIndex((i) => Math.max(i - 1, 0));
+  }, []);
+
+  const toggleJurisdiction = (id: JurisdictionId) => {
+    setState((s) => ({
+      ...s,
+      jurisdictions: s.jurisdictions.includes(id)
+        ? s.jurisdictions.filter((j) => j !== id)
+        : [...s.jurisdictions, id],
+    }));
+    setError(null);
+  };
+
+  const addTeamEmail = () => {
+    const email = teamInput.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setTeamError("Enter a valid email address.");
+      return;
+    }
+    if (state.teamEmails.includes(email)) {
+      setTeamError("This email is already on the list.");
+      return;
+    }
+    setTeamError(null);
+    setState((s) => ({ ...s, teamEmails: [...s.teamEmails, email] }));
+    setTeamInput("");
+  };
+
+  const toggleAlertChannel = (ch: AlertChannel) => {
+    setState((s) => {
+      const has = s.alertChannels.includes(ch);
+      const next = has
+        ? s.alertChannels.filter((c) => c !== ch)
+        : [...s.alertChannels, ch];
+      return { ...s, alertChannels: next.length ? next : ["email"] };
+    });
+  };
+
+  return (
+    <div className="mx-auto flex min-h-screen w-full max-w-onboarding flex-col px-4 py-8 sm:px-6">
+      <header className="mb-8">
+        <p className="text-caption font-medium uppercase tracking-wide text-brand">
+          Crypto Compliance Tracker
+        </p>
+        <OnboardingProgress currentIndex={stepIndex} />
+      </header>
+
+      <main className="flex flex-1 flex-col">
+        <form
+          id={formId}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!isLastStep) goNext();
+          }}
+          noValidate
+          className="flex flex-1 flex-col"
+        >
+          <div className="sr-only" aria-live="assertive" aria-atomic="true">
+            {step.title}. {step.description}
+          </div>
+
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-display-sm text-ink outline-none"
+          >
+            {step.title}
+          </h1>
+          <p className="mt-2 text-body text-ink-muted">{step.description}</p>
+
+          <div className="mt-8 flex flex-1 flex-col gap-6">
+            {stepIndex === 0 && (
+              <Field
+                id={`${formId}-org`}
+                label="Organization name"
+                hint="Legal entity name as it appears in filings."
+                value={state.organizationName}
+                onChange={(e) => {
+                  setState((s) => ({ ...s, organizationName: e.target.value }));
+                  setError(null);
+                }}
+                error={error ?? undefined}
+                required
+                autoComplete="organization"
+                placeholder="e.g. Acme Digital Assets Ltd."
+              />
+            )}
+
+            {stepIndex === 1 && (
+              <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
+                <legend className="sr-only">Business type</legend>
+                {ENTITY_OPTIONS.map((opt) => (
+                  <SelectableCard
+                    key={opt.value}
+                    id={`${formId}-entity-${opt.value}`}
+                    name="entityType"
+                    value={opt.value}
+                    checked={state.entityType === opt.value}
+                    onChange={() => {
+                      setState((s) => ({ ...s, entityType: opt.value }));
+                      setError(null);
+                    }}
+                    title={opt.title}
+                    description={opt.description}
+                  />
+                ))}
+                {error && (
+                  <p role="alert" className="text-caption text-danger">
+                    {error}
+                  </p>
+                )}
+              </fieldset>
+            )}
+
+            {stepIndex === 2 && (
+              <fieldset className="m-0 flex flex-col gap-4 border-0 p-0">
+                <legend className="sr-only">Jurisdictions to monitor</legend>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Jurisdictions">
+                  {JURISDICTION_OPTIONS.map((j) => (
+                    <CheckboxChip
+                      key={j.value}
+                      id={`${formId}-j-${j.value}`}
+                      label={j.label}
+                      checked={state.jurisdictions.includes(j.value)}
+                      onChange={() => toggleJurisdiction(j.value)}
+                    />
+                  ))}
+                </div>
+                {error && (
+                  <p role="alert" className="text-caption text-danger">
+                    {error}
+                  </p>
+                )}
+              </fieldset>
+            )}
+
+            {stepIndex === 3 && (
+              <div className="flex flex-col gap-4">
+                <Field
+                  id={`${formId}-team-email`}
+                  label="Colleague email"
+                  hint="Press Add or Enter after each address. You can skip and invite later."
+                  type="email"
+                  value={teamInput}
+                  onChange={(e) => {
+                    setTeamInput(e.target.value);
+                    setTeamError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTeamEmail();
+                    }
+                  }}
+                  error={teamError ?? undefined}
+                  placeholder="compliance@company.com"
+                  autoComplete="email"
+                />
+                <Button type="button" variant="secondary" onClick={addTeamEmail}>
+                  Add teammate
+                </Button>
+                {state.teamEmails.length > 0 && (
+                  <ul className="flex flex-col gap-2" aria-label="Invited teammates">
+                    {state.teamEmails.map((email) => (
+                      <li
+                        key={email}
+                        className="flex items-center justify-between rounded-md border border-border bg-surface-raised px-4 py-3 text-body"
+                      >
+                        <span>{email}</span>
+                        <button
+                          type="button"
+                          className="min-h-[var(--size-touch-min)] min-w-[var(--size-touch-min)] text-caption text-ink-muted hover:text-danger motion-safe-transition"
+                          onClick={() =>
+                            setState((s) => ({
+                              ...s,
+                              teamEmails: s.teamEmails.filter((e) => e !== email),
+                            }))
+                          }
+                          aria-label={`Remove ${email}`}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {stepIndex === 4 && (
+              <fieldset className="m-0 flex flex-col gap-6 border-0 p-0">
+                <legend className="sr-only">Alert preferences</legend>
+                <div>
+                  <span id={`${formId}-channels-label`} className="text-caption font-medium text-ink">
+                    Notification channels
+                  </span>
+                  <div
+                    className="mt-2 flex flex-wrap gap-2"
+                    role="group"
+                    aria-labelledby={`${formId}-channels-label`}
+                  >
+                    <CheckboxChip
+                      id={`${formId}-ch-email`}
+                      label="Email digest"
+                      checked={state.alertChannels.includes("email")}
+                      onChange={() => toggleAlertChannel("email")}
+                    />
+                    <CheckboxChip
+                      id={`${formId}-ch-slack`}
+                      label="Slack"
+                      checked={state.alertChannels.includes("slack")}
+                      onChange={() => toggleAlertChannel("slack")}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span id={`${formId}-freq-label`} className="text-caption font-medium text-ink">
+                    Digest frequency
+                  </span>
+                  <div
+                    className="mt-2 flex flex-col gap-2 sm:flex-row"
+                    role="radiogroup"
+                    aria-labelledby={`${formId}-freq-label`}
+                  >
+                    {(["daily", "weekly"] as const).map((freq) => (
+                      <SelectableCard
+                        key={freq}
+                        id={`${formId}-freq-${freq}`}
+                        name="digestFrequency"
+                        value={freq}
+                        checked={state.digestFrequency === freq}
+                        onChange={() => setState((s) => ({ ...s, digestFrequency: freq }))}
+                        title={freq === "daily" ? "Daily summary" : "Weekly summary"}
+                        description={
+                          freq === "daily"
+                            ? "Critical alerts still sent immediately."
+                            : "Best for lower-volume monitoring."
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              </fieldset>
+            )}
+
+            {stepIndex === 5 && (
+              <div
+                className="rounded-lg border border-border bg-surface-raised p-6 shadow-card"
+                role="status"
+              >
+                <p className="text-title text-success">Workspace configured</p>
+                <dl className="mt-4 grid gap-3 text-body">
+                  <div>
+                    <dt className="text-caption text-ink-subtle">Organization</dt>
+                    <dd className="font-medium text-ink">{state.organizationName}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-caption text-ink-subtle">Entity type</dt>
+                    <dd className="font-medium capitalize text-ink">{state.entityType}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-caption text-ink-subtle">Jurisdictions</dt>
+                    <dd className="font-medium text-ink">
+                      {state.jurisdictions.map((j) => j.toUpperCase()).join(", ")}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-caption text-ink-subtle">Team invites</dt>
+                    <dd className="font-medium text-ink">
+                      {state.teamEmails.length
+                        ? state.teamEmails.join(", ")
+                        : "None yet"}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+          </div>
+
+          <footer className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            {stepIndex > 0 && !isLastStep && (
+              <Button type="button" variant="ghost" onClick={goBack}>
+                Back
+              </Button>
+            )}
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-end">
+              {stepIndex === 3 && (
+                <Button type="button" variant="secondary" onClick={goNext}>
+                  Skip for now
+                </Button>
+              )}
+              {!isLastStep ? (
+                <Button type="submit" variant="primary">
+                  Continue
+                </Button>
+              ) : (
+                <LinkButton href="/dashboard" className="w-full sm:w-auto" fullWidth>
+                  Go to dashboard
+                </LinkButton>
+              )}
+            </div>
+          </footer>
+        </form>
+      </main>
+    </div>
+  );
+}
