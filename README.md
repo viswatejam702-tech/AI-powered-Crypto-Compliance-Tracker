@@ -9,11 +9,6 @@ npm install
 npm run dev
 ```
 
-- Home (landing): http://localhost:3000
-- Onboarding: http://localhost:3000/onboarding
-- Mobile (fintech dark): http://localhost:3000/mobile
-- Dashboard: http://localhost:3000/dashboard
-
 ## Docs
 
 - UX audit (top 5 issues): `docs/ux-audit.md`
